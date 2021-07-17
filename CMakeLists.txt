@@ -6,6 +6,7 @@ project(sycl_planning)
 
 add_library(sycl_planning
   src/map.cpp
+  src/layer.cpp
 )
 
 target_include_directories(sycl_planning

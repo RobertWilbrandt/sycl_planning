@@ -1,7 +1,7 @@
 find_package(GTest REQUIRED)
 
 add_executable(basic_test
-  basic_test.cpp
+  map.cpp
 )
 
 target_link_libraries(basic_test
