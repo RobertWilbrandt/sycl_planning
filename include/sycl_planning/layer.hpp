@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CL/sycl.hpp>
 #include <cstddef>
 
 namespace sycl_planning {
@@ -10,6 +11,8 @@ class Layer {
   virtual ~Layer();
 
   std::size_t resolution() const;
+
+  virtual void clear(sycl::queue& q) = 0;
 
  private:
   std::size_t resolution_;

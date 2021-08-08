@@ -3,5 +3,6 @@
 #include <gtest/gtest.h>
 
 TEST(DenseArrayStorage, Dummy) {
-  sycl_planning::DenseArrayStorage<float> test_storage(10, 20, 30, 16);
+  sycl::queue q{sycl::host_selector{}};
+  sycl_planning::DenseArrayStorage<float> test_storage(10, 20, 30, 16, q);
 }

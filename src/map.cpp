@@ -43,4 +43,10 @@ const Layer& Map::layer(const std::string& name) const {
   }
 }
 
+void Map::clear(sycl::queue& q) {
+  for (auto const& layer : layers_) {
+    layer.second->clear(q);
+  }
+}
+
 }  // namespace sycl_planning

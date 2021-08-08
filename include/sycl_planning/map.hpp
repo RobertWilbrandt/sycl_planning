@@ -1,5 +1,6 @@
 #pragma once
 
+#include <CL/sycl.hpp>
 #include <memory>
 #include <string>
 #include <utility>
@@ -22,6 +23,8 @@ class Map {
   const Layer& layer(size_t i) const;
   Layer& layer(const std::string& name);
   const Layer& layer(const std::string& name) const;
+
+  void clear(sycl::queue& q);
 
  private:
   std::vector<std::pair<std::string, std::unique_ptr<Layer>>> layers_;

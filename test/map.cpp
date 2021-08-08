@@ -6,6 +6,8 @@ class TestLayer : public sycl_planning::Layer {
  public:
   explicit TestLayer(int i) : Layer{2}, i{i} {}
 
+  void clear(sycl::queue& q) override {}
+
   int i;
 };
 
