@@ -4,7 +4,7 @@
 
 class TestLayer : public sycl_planning::Layer {
  public:
-  explicit TestLayer(int i) : i{i} {}
+  explicit TestLayer(int i) : Layer{2}, i{i} {}
 
   int i;
 };
