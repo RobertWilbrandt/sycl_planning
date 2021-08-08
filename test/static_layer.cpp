@@ -3,7 +3,11 @@
 #include <gtest/gtest.h>
 
 template <typename T>
-class DummyStorage {};
+class DummyStorage {
+ public:
+  DummyStorage(std::size_t dim_x, std::size_t dim_y, std::size_t dim_z,
+               std::size_t resolution) {}
+};
 
 TEST(StaticLayer, Dummy) {
   sycl_planning::StaticLayer<float, DummyStorage> layer(30, 20, 10, 8);
