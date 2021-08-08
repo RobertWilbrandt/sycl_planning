@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <cstddef>
 
 namespace sycl_planning {
@@ -56,6 +57,9 @@ struct Translation3 : public Vector3<T, Translation3> {
   static const Translation3<T> unitX;
   static const Translation3<T> unitY;
   static const Translation3<T> unitZ;
+
+  T norm() const;
+  T normSquared() const;
 };
 
 using Translation3d = Translation3<double>;
@@ -95,6 +99,64 @@ template <typename T>
 Position3<T> operator-(const Position3<T>& p, const Translation3<T>& t);
 template <typename T>
 Position3<T>& operator-=(Position3<T>& p, const Translation3<T>& t);
+
+/*
+ * Quaternion
+ */
+
+template <typename T>
+struct Quaternion {
+  Quaternion();
+  Quaternion(T a, T b, T c, T d);
+
+  static const Quaternion<T> identity;
+
+  template <typename TargetT>
+  Quaternion<TargetT> cast() const;
+
+  Quaternion<T> conjugate() const;
+
+  T a;
+  T b;
+  T c;
+  T d;
+};
+
+using Quaterniond = Quaternion<double>;
+using Quaternionf = Quaternion<float>;
+
+template <typename T>
+bool operator==(const Quaternion<T>& q1, const Quaternion<T>& q2);
+template <typename T>
+bool operator!=(const Quaternion<T>& q1, const Quaternion<T>& q2);
+
+template <typename T>
+Quaternion<T> operator*(const Quaternion<T>& q1, const Quaternion<T>& q2);
+template <typename T>
+Quaternion<T>& operator*=(Quaternion<T>& q1, const Quaternion<T>& q2);
+
+/*
+ * Rotation
+ */
+
+template <typename T>
+class Rotation3 {
+ public:
+  Rotation3();
+  explicit Rotation3(const Quaternion<T>& q);
+
+  static Rotation3<T> aroundX(T angle);
+  static Rotation3<T> aroundY(T angle);
+  static Rotation3<T> aroundZ(T angle);
+
+  Translation3<T> operator*(const Translation3<T>& t) const;
+
+ private:
+  Quaternion<T> q_;
+};
+
+using Rotation3d = Rotation3<double>;
+using Rotation3f = Rotation3<float>;
 
 /*
  * Template definitions
@@ -159,6 +221,18 @@ const Translation3<T> Translation3<T>::unitY = Translation3<T>{0, 1, 0};
 
 template <typename T>
 const Translation3<T> Translation3<T>::unitZ = Translation3<T>{0, 0, 1};
+
+template <typename T>
+T Translation3<T>::norm() const {
+  return std::sqrt(normSquared());
+}
+
+template <typename T>
+T Translation3<T>::normSquared() const {
+  return Vector3<T, Translation3>::x * Vector3<T, Translation3>::x +
+         Vector3<T, Translation3>::y * Vector3<T, Translation3>::y +
+         Vector3<T, Translation3>::z * Vector3<T, Translation3>::z;
+}
 
 template <typename T>
 Translation3<T> operator+(const Translation3<T>& t1,
@@ -236,6 +310,70 @@ template <typename T>
 Position3<T>& operator-=(Position3<T>& p, const Translation3<T>& t) {
   p = p - t;
   return p;
+}
+
+template <typename T>
+Quaternion<T>::Quaternion() : a{0}, b{0}, c{0}, d{0} {}
+
+template <typename T>
+Quaternion<T>::Quaternion(T a, T b, T c, T d) : a{a}, b{b}, c{c}, d{d} {}
+
+template <typename T>
+const Quaternion<T> Quaternion<T>::identity = Quaternion<T>{1, 0, 0, 0};
+
+template <typename T>
+template <typename TargetT>
+Quaternion<TargetT> Quaternion<T>::cast() const {
+  return Quaternion<TargetT>{TargetT{a}, TargetT{b}, TargetT{c}, TargetT{d}};
+}
+
+template <typename T>
+Quaternion<T> Quaternion<T>::conjugate() const {
+  return Quaternion<T>{a, -b, -c, -d};
+}
+
+template <typename T>
+bool operator==(const Quaternion<T>& q1, const Quaternion<T>& q2) {
+  return (q1.a == q2.a) && (q1.b == q2.b) && (q1.c == q2.c) && (q1.d == q2.d);
+}
+
+template <typename T>
+Quaternion<T> operator*(const Quaternion<T>& q1, const Quaternion<T>& q2) {
+  return Quaternion<T>{q1.a * q2.a - q1.b * q2.b - q1.c * q2.c - q1.d * q2.d,
+                       q1.a * q2.b + q1.b * q2.a + q1.c * q2.d - q1.d * q2.c,
+                       q1.a * q2.c - q1.b * q2.d + q1.c * q2.a + q1.d * q2.b,
+                       q1.a * q2.d + q1.b * q2.c - q1.c * q2.b + q1.d * q2.a};
+}
+
+template <typename T>
+Rotation3<T>::Rotation3() {}
+
+template <typename T>
+Rotation3<T>::Rotation3(const Quaternion<T>& q) : q_{q} {}
+
+template <typename T>
+Rotation3<T> Rotation3<T>::aroundX(T angle) {
+  return Rotation3{
+      Quaternion<T>{std::cos(angle / 2), std::sin(angle / 2), 0, 0}};
+}
+
+template <typename T>
+Rotation3<T> Rotation3<T>::aroundY(T angle) {
+  return Rotation3{
+      Quaternion<T>{std::cos(angle / 2), 0, std::sin(angle / 2), 0}};
+}
+
+template <typename T>
+Rotation3<T> Rotation3<T>::aroundZ(T angle) {
+  return Rotation3{
+      Quaternion<T>{std::cos(angle / 2), 0, 0, std::sin(angle / 2)}};
+}
+
+template <typename T>
+Translation3<T> Rotation3<T>::operator*(const Translation3<T>& t) const {
+  Quaternion<T> result_quat =
+      q_ * Quaternion<T>{0, t.x, t.y, t.z} * q_.conjugate();
+  return Translation3<T>{result_quat.b, result_quat.c, result_quat.d};
 }
 
 }  // namespace sycl_planning
