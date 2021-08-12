@@ -150,14 +150,35 @@ template <typename T>
 Quaternion<T>& operator*=(Quaternion<T>& q1, const Quaternion<T>& q2);
 
 /*
+ * Orientation
+ */
+template <typename T>
+class Orientation3 {
+ public:
+  Orientation3();
+  explicit Orientation3(const Quaternion<T>& q);
+
+  template <template <typename> typename TargetT>
+  TargetT<T> as() const;
+
+ private:
+  Quaternion<T> q_;
+};
+
+using Orientation3d = Orientation3<double>;
+using Orientation3f = Orientation3<float>;
+
+/*
  * Rotation
  */
-
 template <typename T>
 class Rotation3 {
  public:
   Rotation3();
   explicit Rotation3(const Quaternion<T>& q);
+
+  template <template <typename> typename TargetT>
+  TargetT<T> as() const;
 
   static Rotation3<T> aroundX(T angle);
   static Rotation3<T> aroundY(T angle);
@@ -171,6 +192,54 @@ class Rotation3 {
 
 using Rotation3d = Rotation3<double>;
 using Rotation3f = Rotation3<float>;
+
+template <typename T>
+Rotation3<T> operator*(const Rotation3<T>& r1, const Rotation3<T>& r2);
+template <typename T>
+Rotation3<T>& operator*=(Rotation3<T>& r1, const Rotation3<T>& r2);
+
+template <typename T>
+Orientation3<T> operator*(const Rotation3<T>& r, const Orientation3<T>& o);
+
+/*
+ * Pose
+ */
+template <typename T>
+struct Pose3 {
+ public:
+  Pose3();
+  Pose3(const Position3<T>& position, const Orientation3<T>& orientation);
+
+  Position3<T> position;
+  Orientation3<T> orientation;
+};
+
+using Pose3d = Pose3<double>;
+using Pose3f = Pose3<float>;
+
+/*
+ * Transform
+ */
+template <typename T>
+struct Transform3 {
+ public:
+  Transform3();
+  Transform3(const Translation3<T>& translation, const Rotation3<T>& rotation);
+
+  Translation3<T> translation;
+  Rotation3<T> rotation;
+};
+
+using Transform3d = Transform3<double>;
+using Transform3f = Transform3<float>;
+
+template <typename T>
+Transform3<T> operator*(const Transform3<T>& t1, const Transform3<T>& t2);
+template <typename T>
+Transform3<T>& operator*=(Transform3<T>& t1, const Transform3<T>& t2);
+
+template <typename T>
+Pose3<T> operator*(const Transform3<T>& t, const Pose3<T>& p);
 
 /*
  * Template definitions
@@ -366,10 +435,28 @@ Quaternion<T> operator*(const Quaternion<T>& q1, const Quaternion<T>& q2) {
 }
 
 template <typename T>
+Orientation3<T>::Orientation3() {}
+
+template <typename T>
+Orientation3<T>::Orientation3(const Quaternion<T>& q) : q_{q} {}
+
+template <typename T>
+template <template <typename> typename TargetT>
+TargetT<T> Orientation3<T>::as() const {
+  return TargetT<T>{q_};
+}
+
+template <typename T>
 Rotation3<T>::Rotation3() {}
 
 template <typename T>
 Rotation3<T>::Rotation3(const Quaternion<T>& q) : q_{q} {}
+
+template <typename T>
+template <template <typename> typename TargetT>
+TargetT<T> Rotation3<T>::as() const {
+  return TargetT<T>{q_};
+}
 
 template <typename T>
 Rotation3<T> Rotation3<T>::aroundX(T angle) {
@@ -394,6 +481,58 @@ Translation3<T> Rotation3<T>::operator*(const Translation3<T>& t) const {
   Quaternion<T> result_quat =
       q_ * Quaternion<T>{0, t.x, t.y, t.z} * q_.conjugate();
   return Translation3<T>{result_quat.b, result_quat.c, result_quat.d};
+}
+
+template <typename T>
+Rotation3<T> operator*(const Rotation3<T>& r1, const Rotation3<T>& r2) {
+  return Rotation3<T>{r1.template as<Quaternion>() *
+                      r2.template as<Quaternion>()};
+}
+
+template <typename T>
+Rotation3<T>& operator*=(Rotation3<T>& r1, const Rotation3<T>& r2) {
+  r1 = r1 * r2;
+  return r1;
+}
+
+template <typename T>
+Orientation3<T> operator*(const Rotation3<T>& r, const Orientation3<T>& o) {
+  return (r * o.template as<Rotation3>()).template as<Orientation3>();
+}
+
+template <typename T>
+Pose3<T>::Pose3() {}
+
+template <typename T>
+Pose3<T>::Pose3(const Position3<T>& position,
+                const Orientation3<T>& orientation)
+    : position{position}, orientation{orientation} {}
+
+template <typename T>
+Transform3<T>::Transform3() {}
+
+template <typename T>
+Transform3<T>::Transform3(const Translation3<T>& translation,
+                          const Rotation3<T>& rotation)
+    : translation{translation}, rotation{rotation} {}
+
+template <typename T>
+Transform3<T> operator*(const Transform3<T>& t1, const Transform3<T>& t2) {
+  return Transform3<T>{t1 + t1.rotation * t2.translation,
+                       t1.rotation * t2.rotation};
+}
+
+template <typename T>
+Transform3<T>& operator*=(Transform3<T>& t1, const Transform3<T>& t2) {
+  t1 = t1 * t2;
+  return t1;
+}
+
+template <typename T>
+Pose3<T> operator*(const Transform3<T>& t, const Pose3<T>& p) {
+  return Pose3<T>{Position3<T>{} + t.translation +
+                      t.rotation * p.position.template as<Translation3>(),
+                  t.rotation * p.orientation};
 }
 
 }  // namespace sycl_planning
