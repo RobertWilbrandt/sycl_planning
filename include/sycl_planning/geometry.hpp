@@ -101,6 +101,20 @@ template <typename T>
 Position3<T>& operator-=(Position3<T>& p, const Translation3<T>& t);
 
 /*
+ * Extent
+ */
+template <typename T>
+struct Extent : public Vector3<T, Extent> {
+  Extent();
+  Extent(T x, T y, T z);
+};
+
+using Extentd = Extent<double>;
+using Extentf = Extent<float>;
+using Extenti = Extent<int>;
+using Extents = Extent<std::size_t>;
+
+/*
  * Quaternion
  */
 
@@ -311,6 +325,12 @@ Position3<T>& operator-=(Position3<T>& p, const Translation3<T>& t) {
   p = p - t;
   return p;
 }
+
+template <typename T>
+Extent<T>::Extent() {}
+
+template <typename T>
+Extent<T>::Extent(T x, T y, T z) : Vector3<T, Extent>{x, y, z} {}
 
 template <typename T>
 Quaternion<T>::Quaternion() : a{0}, b{0}, c{0}, d{0} {}
