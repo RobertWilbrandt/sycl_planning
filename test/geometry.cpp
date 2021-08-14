@@ -43,12 +43,30 @@ TEST(Geometry, RotationBasicOperation) {
                 sycl_planning::Translation3d::unitY)
                    .normSquared()),
               0., 0.001);
+
+  // Test inverse
+  const auto test_r = sycl_planning::Rotation3d::aroundX(-M_PI / 2) *
+                      sycl_planning::Rotation3d::aroundZ(-M_PI / 2);
+  EXPECT_NEAR((test_r * test_r.inverse() * test_t - test_t).normSquared(), 0.,
+              0.001);
+  EXPECT_NEAR((test_r.inverse() * test_r * test_t - test_t).normSquared(), 0.,
+              0.001);
 }
 
 TEST(Geometry, BasicTransform) {
   sycl_planning::Transform3d test_t{
       sycl_planning::Translation3d{1, 2, 3},
       sycl_planning::Rotation3d::aroundX(M_PI / 2)};
+  sycl_planning::Pose3d test_p{sycl_planning::Position3d{1, 0, 0},
+                               sycl_planning::Orientation3d{}};
+
+  // Test inverse
+  EXPECT_NEAR(((test_t * test_t.inverse() * test_p).position - test_p.position)
+                  .normSquared(),
+              0., 0.001);
+  EXPECT_NEAR(((test_t.inverse() * test_t * test_p).position - test_p.position)
+                  .normSquared(),
+              0., 0.001);
 
   EXPECT_NEAR(
       ((test_t * sycl_planning::Pose3d{sycl_planning::Position3d{1, 0, 0},

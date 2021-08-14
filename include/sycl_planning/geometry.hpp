@@ -186,6 +186,8 @@ class Rotation3 {
 
   Translation3<T> operator*(const Translation3<T>& t) const;
 
+  Rotation3<T> inverse() const;
+
  private:
   Quaternion<T> q_;
 };
@@ -225,6 +227,8 @@ struct Transform3 {
  public:
   Transform3();
   Transform3(const Translation3<T>& translation, const Rotation3<T>& rotation);
+
+  Transform3<T> inverse() const;
 
   Translation3<T> translation;
   Rotation3<T> rotation;
@@ -484,6 +488,11 @@ Translation3<T> Rotation3<T>::operator*(const Translation3<T>& t) const {
 }
 
 template <typename T>
+Rotation3<T> Rotation3<T>::inverse() const {
+  return Rotation3<T>{q_.conjugate()};
+}
+
+template <typename T>
 Rotation3<T> operator*(const Rotation3<T>& r1, const Rotation3<T>& r2) {
   return Rotation3<T>{r1.template as<Quaternion>() *
                       r2.template as<Quaternion>()};
@@ -517,8 +526,14 @@ Transform3<T>::Transform3(const Translation3<T>& translation,
     : translation{translation}, rotation{rotation} {}
 
 template <typename T>
+Transform3<T> Transform3<T>::inverse() const {
+  const auto inv_rot = rotation.inverse();
+  return Transform3<T>{inv_rot * (-translation), inv_rot};
+}
+
+template <typename T>
 Transform3<T> operator*(const Transform3<T>& t1, const Transform3<T>& t2) {
-  return Transform3<T>{t1 + t1.rotation * t2.translation,
+  return Transform3<T>{t1.translation + t1.rotation * t2.translation,
                        t1.rotation * t2.rotation};
 }
 
