@@ -15,7 +15,7 @@ class DenseArrayStorage {
   void clear(sycl::queue& q);
 
  private:
-  sycl::buffer<CellT, 3> buffer_;
+  sycl::buffer<typename CellT::Content, 3> buffer_;
 };
 
 /*
