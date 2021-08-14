@@ -10,7 +10,7 @@ namespace sycl_planning {
 template <typename CellT>
 class DenseArrayStorage {
  public:
-  DenseArrayStorage(Extents extent, std::size_t resolution, sycl::queue& q);
+  DenseArrayStorage(Extent3s extent, std::size_t resolution, sycl::queue& q);
 
   void clear(sycl::queue& q);
 
@@ -23,7 +23,7 @@ class DenseArrayStorage {
  */
 
 template <typename CellT>
-DenseArrayStorage<CellT>::DenseArrayStorage(Extents extent,
+DenseArrayStorage<CellT>::DenseArrayStorage(Extent3s extent,
                                             std::size_t resolution,
                                             sycl::queue& q)
     : buffer_{sycl::range<3>{extent.x * resolution, extent.y * resolution,

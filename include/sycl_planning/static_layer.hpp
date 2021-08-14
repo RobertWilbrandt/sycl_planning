@@ -11,7 +11,7 @@ namespace sycl_planning {
 template <typename CellT, template <typename> typename StorageT>
 class StaticLayer : public Layer {
  public:
-  StaticLayer(Extents extent, std::size_t resolution, sycl::queue& q);
+  StaticLayer(Extent3s extent, std::size_t resolution, sycl::queue& q);
 
   void clear(sycl::queue& q) override;
 
@@ -24,7 +24,7 @@ class StaticLayer : public Layer {
  */
 
 template <typename CellT, template <typename> typename StorageT>
-StaticLayer<CellT, StorageT>::StaticLayer(Extents extent,
+StaticLayer<CellT, StorageT>::StaticLayer(Extent3s extent,
                                           std::size_t resolution,
                                           sycl::queue& q)
     : Layer{resolution}, storage_{extent, resolution, q} {}
