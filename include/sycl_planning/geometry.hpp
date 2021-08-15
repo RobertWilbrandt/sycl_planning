@@ -2,6 +2,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <limits>
 
 namespace sycl_planning {
 
@@ -107,6 +108,8 @@ template <typename T>
 struct Extent3 : public Vector3<T, Extent3> {
   Extent3();
   Extent3(T x, T y, T z);
+
+  static const Extent3<T> unbounded;
 };
 
 using Extent3d = Extent3<double>;
@@ -404,6 +407,11 @@ Extent3<T>::Extent3() {}
 
 template <typename T>
 Extent3<T>::Extent3(T x, T y, T z) : Vector3<T, Extent3>{x, y, z} {}
+
+template <typename T>
+const Extent3<T> Extent3<T>::unbounded =
+    Extent3<T>{std::numeric_limits<T>::max(), std::numeric_limits<T>::max(),
+               std::numeric_limits<T>::max()};
 
 template <typename T>
 Quaternion<T>::Quaternion() : a{0}, b{0}, c{0}, d{0} {}
