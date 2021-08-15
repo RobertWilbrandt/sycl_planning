@@ -28,9 +28,18 @@ class DenseArrayStorage {
     Accessor(sycl::buffer<typename CellT::Content, 3>& buffer,
              sycl::handler& cgh);
 
+    template <AccessMode TestModeT = ModeT>
+    typename std::enable_if<!AccessModeInfo<TestModeT>::allows_write,
+                            const typename CellT::Content&>::type
+    operator[](const Position3s& p) const;
+    template <AccessMode TestModeT = ModeT>
+    typename std::enable_if<AccessModeInfo<TestModeT>::allows_write,
+                            typename CellT::Content&>::type
+    operator[](const Position3s& p) const;
+
    private:
-    sycl::accessor<typename CellT::Content, 3, SyclAccessMode<ModeT>::value,
-                   TargetT>
+    sycl::accessor<typename CellT::Content, 3,
+                   AccessModeInfo<ModeT>::sycl_value, TargetT>
         access_;
   };
 
@@ -76,14 +85,35 @@ DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::Accessor(
     typename std::enable_if<TestTargetT == sycl::access::target::host_buffer,
                             sycl::buffer<typename CellT::Content, 3>&>::type
         buffer)
-    : access_{buffer.template get_access<SyclAccessMode<ModeT>::value>()} {}
+    : access_{buffer.template get_access<AccessModeInfo<ModeT>::sycl_value>()} {
+}
 
 template <typename CellT>
 template <AccessMode ModeT, sycl::access::target TargetT>
 DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::Accessor(
     sycl::buffer<typename CellT::Content, 3>& buffer, sycl::handler& cgh)
-    : access_{buffer.template get_access<SyclAccessMode<ModeT>::value, TargetT>(
-          cgh)} {}
+    : access_{buffer.template get_access<AccessModeInfo<ModeT>::sycl_value,
+                                         TargetT>(cgh)} {}
+
+template <typename CellT>
+template <AccessMode ModeT, sycl::access::target TargetT>
+template <AccessMode TestModeT>
+typename std::enable_if<!AccessModeInfo<TestModeT>::allows_write,
+                        const typename CellT::Content&>::type
+DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::operator[](
+    const Position3s& p) const {
+  return access_[sycl::id<3>{p.x, p.y, p.z}];
+}
+
+template <typename CellT>
+template <AccessMode ModeT, sycl::access::target TargetT>
+template <AccessMode TestModeT>
+typename std::enable_if<AccessModeInfo<TestModeT>::allows_write,
+                        typename CellT::Content&>::type
+DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::operator[](
+    const Position3s& p) const {
+  return access_[sycl::id<3>{p.x, p.y, p.z}];
+}
 
 template <typename CellT>
 template <AccessMode ModeT>

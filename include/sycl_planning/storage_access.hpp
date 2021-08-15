@@ -7,26 +7,32 @@ namespace sycl_planning {
 enum class AccessMode { READ, WRITE, READ_WRITE, OVERWRITE };
 
 template <AccessMode ModeT>
-struct SyclAccessMode {};
+struct AccessModeInfo {};
 
 template <>
-struct SyclAccessMode<AccessMode::READ> {
-  static constexpr sycl::access::mode value = sycl::access::mode::read;
+struct AccessModeInfo<AccessMode::READ> {
+  static constexpr sycl::access::mode sycl_value = sycl::access::mode::read;
+  static constexpr bool allows_write = false;
 };
 
 template <>
-struct SyclAccessMode<AccessMode::WRITE> {
-  static constexpr sycl::access::mode value = sycl::access::mode::write;
+struct AccessModeInfo<AccessMode::WRITE> {
+  static constexpr sycl::access::mode sycl_value = sycl::access::mode::write;
+  static constexpr bool allows_write = true;
 };
 
 template <>
-struct SyclAccessMode<AccessMode::READ_WRITE> {
-  static constexpr sycl::access::mode value = sycl::access::mode::read_write;
+struct AccessModeInfo<AccessMode::READ_WRITE> {
+  static constexpr sycl::access::mode sycl_value =
+      sycl::access::mode::read_write;
+  static constexpr bool allows_write = true;
 };
 
 template <>
-struct SyclAccessMode<AccessMode::OVERWRITE> {
-  static constexpr sycl::access::mode value = sycl::access::mode::discard_write;
+struct AccessModeInfo<AccessMode::OVERWRITE> {
+  static constexpr sycl::access::mode sycl_value =
+      sycl::access::mode::discard_write;
+  static constexpr bool allows_write = true;
 };
 
 }  // namespace sycl_planning
