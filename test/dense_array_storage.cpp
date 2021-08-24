@@ -12,7 +12,7 @@ TEST(DenseArrayStorage, BasicReadWrite) {
 
   {
     auto test_access =
-        test_storage.get_access<sycl_planning::AccessMode::OVERWRITE>();
+        test_storage.get_host_access<sycl_planning::AccessMode::OVERWRITE>();
 
     for (size_t x = 0; x < extent.x; ++x) {
       for (size_t y = 0; y < extent.y; ++y) {
@@ -41,7 +41,7 @@ TEST(DenseArrayStorage, BasicReadWrite) {
 
   {
     auto test_access =
-        test_storage.get_access<sycl_planning::AccessMode::READ>();
+        test_storage.get_host_access<sycl_planning::AccessMode::READ>();
 
     for (size_t x = 0; x < extent.x; ++x) {
       for (size_t y = 0; y < extent.y; ++y) {

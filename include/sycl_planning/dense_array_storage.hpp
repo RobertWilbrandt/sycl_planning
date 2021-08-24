@@ -41,7 +41,7 @@ class DenseArrayStorage {
   };
 
   template <AccessMode ModeT>
-  Accessor<ModeT, sycl::access::target::host_buffer> get_access(
+  Accessor<ModeT, sycl::access::target::host_buffer> get_host_access(
       const Position3s& offset = Position3s::origin,
       const Extent3s& range = Extent3s::unbounded);
   template <AccessMode ModeT>
@@ -104,8 +104,8 @@ template <typename CellT>
 template <AccessMode ModeT>
 typename DenseArrayStorage<CellT>::template Accessor<
     ModeT, sycl::access::target::host_buffer>
-DenseArrayStorage<CellT>::get_access(const Position3s& offset,
-                                     const Extent3s& range) {
+DenseArrayStorage<CellT>::get_host_access(const Position3s& offset,
+                                          const Extent3s& range) {
   return Accessor<ModeT, sycl::access::target::host_buffer>{buffer_};
 }
 
