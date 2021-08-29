@@ -3,6 +3,7 @@
 #include <cmath>
 #include <cstddef>
 #include <limits>
+#include <ostream>
 
 namespace sycl_planning {
 
@@ -46,6 +47,9 @@ using Position3d = Position3<double>;
 using Position3f = Position3<float>;
 using Position3i = Position3<int>;
 using Position3s = Position3<std::size_t>;
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Position3<T>& p);
 
 /*
  * Translation3
@@ -101,6 +105,9 @@ Position3<T> operator-(const Position3<T>& p, const Translation3<T>& t);
 template <typename T>
 Position3<T>& operator-=(Position3<T>& p, const Translation3<T>& t);
 
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Translation3<T>& t);
+
 /*
  * Extent3
  */
@@ -116,6 +123,9 @@ using Extent3d = Extent3<double>;
 using Extent3f = Extent3<float>;
 using Extent3i = Extent3<int>;
 using Extent3s = Extent3<std::size_t>;
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Extent3<T>& e);
 
 /*
  * Quaternion
@@ -151,6 +161,9 @@ template <typename T>
 Quaternion<T> operator*(const Quaternion<T>& q1, const Quaternion<T>& q2);
 template <typename T>
 Quaternion<T>& operator*=(Quaternion<T>& q1, const Quaternion<T>& q2);
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Quaternion<T>& q);
 
 /*
  * Orientation
@@ -292,6 +305,12 @@ template <typename T>
 const Position3<T> Position3<T>::origin = Position3<T>{0, 0, 0};
 
 template <typename T>
+std::ostream& operator<<(std::ostream& os,
+                         const sycl_planning::Position3<T>& p) {
+  return os << "Position3(" << p.x << ", " << p.y << ", " << p.z << ")";
+}
+
+template <typename T>
 Translation3<T>::Translation3() {}
 
 template <typename T>
@@ -403,6 +422,11 @@ Position3<T>& operator-=(Position3<T>& p, const Translation3<T>& t) {
 }
 
 template <typename T>
+std::ostream& operator<<(std::ostream& os, const Translation3<T>& t) {
+  return os << "Translation3(" << t.x << ", " << t.y << ", " << t.z << ")";
+}
+
+template <typename T>
 Extent3<T>::Extent3() {}
 
 template <typename T>
@@ -412,6 +436,11 @@ template <typename T>
 const Extent3<T> Extent3<T>::unbounded =
     Extent3<T>{std::numeric_limits<T>::max(), std::numeric_limits<T>::max(),
                std::numeric_limits<T>::max()};
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Extent3<T>& e) {
+  return os << "Extent3(" << e.x << ", " << e.y << ", " << e.z << ")";
+}
 
 template <typename T>
 Quaternion<T>::Quaternion() : a{0}, b{0}, c{0}, d{0} {}
@@ -444,6 +473,12 @@ Quaternion<T> operator*(const Quaternion<T>& q1, const Quaternion<T>& q2) {
                        q1.a * q2.b + q1.b * q2.a + q1.c * q2.d - q1.d * q2.c,
                        q1.a * q2.c - q1.b * q2.d + q1.c * q2.a + q1.d * q2.b,
                        q1.a * q2.d + q1.b * q2.c - q1.c * q2.b + q1.d * q2.a};
+}
+
+template <typename T>
+std::ostream& operator<<(std::ostream& os, const Quaternion<T>& q) {
+  return os << "Quaternion(" << q.a << " + " << q.b << "*i + " << q.c << "*j + "
+            << q.d << "*k)";
 }
 
 template <typename T>
