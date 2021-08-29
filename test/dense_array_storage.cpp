@@ -10,6 +10,9 @@ TEST(DenseArrayStorage, BasicReadWrite) {
       test_storage{sycl_planning::Extent3s{1, 2, 3}, 2, q};
   const auto extent = test_storage.extent();
 
+  /*
+   * Create test pattern: All 0s except (1, 3, 5)
+   */
   {
     auto test_access =
         test_storage.get_host_access<sycl_planning::AccessMode::OVERWRITE>();
@@ -27,6 +30,9 @@ TEST(DenseArrayStorage, BasicReadWrite) {
     }
   }
 
+  /*
+   * Manipulate data: d[x, y, z] = 3 * d[x, y, z] + 1
+   */
   q.submit([&](sycl::handler& cgh) {
     auto access =
         test_storage.get_access<sycl_planning::AccessMode::READ_WRITE>(cgh);
@@ -39,6 +45,12 @@ TEST(DenseArrayStorage, BasicReadWrite) {
     });
   });
 
+  /*
+   * Verify expected data: d[x, y, z] = {
+   *     4, x=1 && y=3 && z=5
+   *     1, else
+   *   }
+   */
   {
     auto test_access =
         test_storage.get_host_access<sycl_planning::AccessMode::READ>();
@@ -51,6 +63,23 @@ TEST(DenseArrayStorage, BasicReadWrite) {
           } else {
             EXPECT_EQ((test_access[sycl_planning::Position3s{x, y, z}]), 1);
           }
+        }
+      }
+    }
+  }
+
+  /*
+   * Check that we can clear the data
+   */
+  test_storage.clear(q);
+  {
+    auto test_access =
+        test_storage.get_host_access<sycl_planning::AccessMode::READ>();
+
+    for (size_t x = 0; x < extent.x; ++x) {
+      for (size_t y = 0; y < extent.y; ++y) {
+        for (size_t z = 0; z < extent.z; ++z) {
+          EXPECT_EQ((test_access[sycl_planning::Position3s{x, y, z}]), 0);
         }
       }
     }

@@ -73,7 +73,15 @@ Extent3s DenseArrayStorage<CellT>::extent() const {
 }
 
 template <typename CellT>
-void DenseArrayStorage<CellT>::clear(sycl::queue& q) {}
+void DenseArrayStorage<CellT>::clear(sycl::queue& q) {
+  q.submit([&](sycl::handler& cgh) {
+    auto access = get_access<sycl_planning::AccessMode::OVERWRITE>(cgh);
+
+    cgh.parallel_for<class ClearData>(buffer_.get_range(), [=](sycl::id<3> id) {
+      CellT::clear(access[Position3s{id.get(0), id.get(1), id.get(2)}]);
+    });
+  });
+}
 
 template <typename CellT>
 template <AccessMode ModeT, sycl::access::target TargetT>
