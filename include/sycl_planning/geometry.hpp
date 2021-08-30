@@ -117,6 +117,8 @@ struct Extent3 : public Vector3<T, Extent3> {
   Extent3(T x, T y, T z);
 
   static const Extent3<T> unbounded;
+
+  Extent3<T> clamp(const Extent3<T>& e) const;
 };
 
 using Extent3d = Extent3<double>;
@@ -436,6 +438,14 @@ template <typename T>
 const Extent3<T> Extent3<T>::unbounded =
     Extent3<T>{std::numeric_limits<T>::max(), std::numeric_limits<T>::max(),
                std::numeric_limits<T>::max()};
+
+template <typename T>
+Extent3<T> Extent3<T>::clamp(const Extent3<T>& e) const {
+  return Extent3<T>{
+      Vector3<T, Extent3>::x < e.x ? Vector3<T, Extent3>::x : e.x,
+      Vector3<T, Extent3>::y < e.y ? Vector3<T, Extent3>::y : e.y,
+      Vector3<T, Extent3>::z < e.z ? Vector3<T, Extent3>::z : e.z};
+}
 
 template <typename T>
 std::ostream& operator<<(std::ostream& os, const Extent3<T>& e) {

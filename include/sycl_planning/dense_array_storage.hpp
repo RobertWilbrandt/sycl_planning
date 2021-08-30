@@ -22,11 +22,17 @@ class DenseArrayStorage {
   class Accessor {
    public:
     template <sycl::access::target TestTargetT = TargetT>
-    explicit Accessor(typename std::enable_if<
-                      TestTargetT == sycl::access::target::host_buffer,
-                      sycl::buffer<typename CellT::Content, 3>&>::type buffer);
+    explicit Accessor(
+        typename std::enable_if<
+            TestTargetT == sycl::access::target::host_buffer,
+            sycl::buffer<typename CellT::Content, 3>&>::type buffer,
+        const Position3s& offset, const Extent3s& extent);
     Accessor(sycl::buffer<typename CellT::Content, 3>& buffer,
-             sycl::handler& cgh);
+             sycl::handler& cgh, const Position3s& offset,
+             const Extent3s& extent);
+
+    Position3s offset() const;
+    Extent3s extent() const;
 
     using ContentType = typename CellT::Content;
     using AccessType = std::conditional_t<AccessModeInfo<ModeT>::allows_write,
@@ -43,11 +49,11 @@ class DenseArrayStorage {
   template <AccessMode ModeT>
   Accessor<ModeT, sycl::access::target::host_buffer> get_host_access(
       const Position3s& offset = Position3s::origin,
-      const Extent3s& range = Extent3s::unbounded);
+      const Extent3s& extent = Extent3s::unbounded);
   template <AccessMode ModeT>
   Accessor<ModeT, sycl::access::target::global_buffer> get_access(
       sycl::handler& cgh, const Position3s& offset = Position3s::origin,
-      const Extent3s& range = Extent3s::unbounded);
+      const Extent3s& extent = Extent3s::unbounded);
 
  private:
   sycl::buffer<typename CellT::Content, 3> buffer_;
@@ -89,16 +95,36 @@ template <sycl::access::target TestTargetT>
 DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::Accessor(
     typename std::enable_if<TestTargetT == sycl::access::target::host_buffer,
                             sycl::buffer<typename CellT::Content, 3>&>::type
-        buffer)
-    : access_{buffer.template get_access<AccessModeInfo<ModeT>::sycl_value>()} {
-}
+        buffer,
+    const Position3s& offset, const Extent3s& extent)
+    : access_{buffer.template get_access<AccessModeInfo<ModeT>::sycl_value>(
+          sycl::range<3>{extent.x, extent.y, extent.z},
+          sycl::id<3>{offset.x, offset.y, offset.z})} {}
 
 template <typename CellT>
 template <AccessMode ModeT, sycl::access::target TargetT>
 DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::Accessor(
-    sycl::buffer<typename CellT::Content, 3>& buffer, sycl::handler& cgh)
-    : access_{buffer.template get_access<AccessModeInfo<ModeT>::sycl_value,
-                                         TargetT>(cgh)} {}
+    sycl::buffer<typename CellT::Content, 3>& buffer, sycl::handler& cgh,
+    const Position3s& offset, const Extent3s& extent)
+    : access_{
+          buffer
+              .template get_access<AccessModeInfo<ModeT>::sycl_value, TargetT>(
+                  cgh, sycl::range<3>{extent.x, extent.y, extent.z},
+                  sycl::id<3>{offset.x, offset.y, offset.z})} {}
+
+template <typename CellT>
+template <AccessMode ModeT, sycl::access::target TargetT>
+Position3s DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::offset() const {
+  const auto acc_offset = access_.get_offset();
+  return Position3s{acc_offset.get(0), acc_offset.get(1), acc_offset.get(2)};
+}
+
+template <typename CellT>
+template <AccessMode ModeT, sycl::access::target TargetT>
+Extent3s DenseArrayStorage<CellT>::Accessor<ModeT, TargetT>::extent() const {
+  const auto acc_range = access_.get_range();
+  return Extent3s{acc_range.get(0), acc_range.get(1), acc_range.get(2)};
+}
 
 template <typename CellT>
 template <AccessMode ModeT, sycl::access::target TargetT>
@@ -113,8 +139,13 @@ template <AccessMode ModeT>
 typename DenseArrayStorage<CellT>::template Accessor<
     ModeT, sycl::access::target::host_buffer>
 DenseArrayStorage<CellT>::get_host_access(const Position3s& offset,
-                                          const Extent3s& range) {
-  return Accessor<ModeT, sycl::access::target::host_buffer>{buffer_};
+                                          const Extent3s& extent) {
+  const auto full_extent = this->extent();
+  const auto clamp_extent =
+      Extent3s{full_extent.x - offset.x, full_extent.y - offset.y,
+               full_extent.z - offset.z};
+  return Accessor<ModeT, sycl::access::target::host_buffer>{
+      buffer_, offset, extent.clamp(clamp_extent)};
 }
 
 template <typename CellT>
@@ -123,8 +154,13 @@ typename DenseArrayStorage<CellT>::template Accessor<
     ModeT, sycl::access::target::global_buffer>
 DenseArrayStorage<CellT>::get_access(sycl::handler& cgh,
                                      const Position3s& offset,
-                                     const Extent3s& range) {
-  return Accessor<ModeT, sycl::access::target::global_buffer>{buffer_, cgh};
+                                     const Extent3s& extent) {
+  const auto full_extent = this->extent();
+  const auto clamp_extent =
+      Extent3s{full_extent.x - offset.x, full_extent.y - offset.y,
+               full_extent.z - offset.z};
+  return Accessor<ModeT, sycl::access::target::global_buffer>{
+      buffer_, cgh, offset, extent.clamp(clamp_extent)};
 }
 
 }  // namespace sycl_planning
