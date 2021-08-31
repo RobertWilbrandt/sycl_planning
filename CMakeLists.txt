@@ -18,6 +18,12 @@ target_link_libraries(${PROJECT_NAME}
   sycl
 )
 
+option(BUILD_DOC "Build documentation")
+if (${BUILD_DOC})
+  add_subdirectory(doc)
+endif ()
+
+option(BUILD_TESTS "Build project tests")
 if(${BUILD_TESTS})
   enable_testing()
   add_subdirectory(test)
