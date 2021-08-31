@@ -1,0 +1,7 @@
+/** \mainpage sycl_plannning
+ *
+ * This project uses the <a href="https://www.khronos.org/sycl/">SYCL</a> framework to plan robot
+ * trajectories on heterogeneous hardware.
+ *
+ * \author Robert Wilbrandt
+ */
