@@ -4,7 +4,6 @@ add_executable(basic_test
   map.cpp
   static_layer.cpp
   dense_array_storage.cpp
-  octree_storage.cpp
   geometry.cpp
 )
 
